@@ -94,26 +94,6 @@ function displayCurrentUser() {
     }
 }
 
-// 사용자 닉네임 변경 함수 (개발용 - 브라우저 콘솔에서 사용)
-window.updateUserNickname = async function(userId, newNickname) {
-    try {
-        const response = await fetch(`/api/users/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: newNickname })
-        });
-        const data = await response.json();
-        if (data.success) {
-            console.log(`✅ 닉네임 변경 성공: ${newNickname}`);
-            location.reload();
-        } else {
-            console.error('❌ 닉네임 변경 실패:', data.error);
-        }
-    } catch (error) {
-        console.error('❌ API 호출 실패:', error);
-    }
-}
-
 // 경험선물 카드 렌더링
 function renderGiftCards() {
     const container = document.getElementById('giftCards');
