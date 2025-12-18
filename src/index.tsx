@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import { readFile } from 'fs/promises'
 
 type Bindings = {
   DB: D1Database;
@@ -292,105 +293,7 @@ app.get('/api/users/:userId/likes', async (c) => {
 })
 
 // ===== Frontend =====
-app.get('/', (c) => {
-  return c.html(`
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>동네선물 - 근처 엄선된 장소들의 할인 방문권을 선물해요</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <link href="/static/style.css" rel="stylesheet">
-    </head>
-    <body class="bg-gray-50">
-        <!-- Main Page -->
-        <div id="mainPage" class="page active">
-            <header class="bg-white shadow-sm sticky top-0 z-50">
-                <div class="max-w-4xl mx-auto px-4 py-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-800">동네선물</h1>
-                            <span class="text-sm text-gray-600"><i class="fas fa-map-marker-alt"></i> 서울시 광진구</span>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">동네 엄선된 장소들을 방문하고 환급 받으세요</p>
-                </div>
-            </header>
-
-            <main class="max-w-4xl mx-auto px-4 py-6">
-                <div id="giftCards" class="space-y-4">
-                    <!-- Gift cards will be loaded here -->
-                </div>
-            </main>
-        </div>
-
-        <!-- Detail Page -->
-        <div id="detailPage" class="page hidden">
-            <div class="bg-white shadow-sm sticky top-0 z-50 px-4 py-4">
-                <button class="back-button" onclick="navigateToMain()">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-            </div>
-            <main id="detailContent" class="pb-20">
-                <!-- Detail content will be loaded here -->
-            </main>
-        </div>
-
-        <!-- Together Page -->
-        <div id="togetherPage" class="page hidden">
-            <header class="bg-white shadow-sm sticky top-0 z-50">
-                <div class="max-w-4xl mx-auto px-4 py-4">
-                    <h1 class="text-2xl font-bold text-gray-800">같이가요</h1>
-                    <p class="text-sm text-gray-600 mt-2">같은 시간에 함께 방문할 사람을 찾아보세요</p>
-                </div>
-            </header>
-            <main class="max-w-4xl mx-auto px-4 py-6">
-                <div id="togetherCards" class="space-y-4">
-                    <!-- Together posts will be loaded here -->
-                </div>
-            </main>
-        </div>
-
-        <!-- My Page -->
-        <div id="myPage" class="page hidden">
-            <header class="bg-white shadow-sm sticky top-0 z-50">
-                <div class="max-w-4xl mx-auto px-4 py-4">
-                    <h1 class="text-2xl font-bold text-gray-800">마이페이지</h1>
-                </div>
-            </header>
-            <main class="max-w-4xl mx-auto px-4 py-6">
-                <div class="text-center py-20">
-                    <i class="fas fa-user-circle text-6xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-600">로그인이 필요합니다</p>
-                </div>
-            </main>
-        </div>
-
-        <!-- Bottom Navigation -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-            <div class="max-w-4xl mx-auto flex justify-around">
-                <button class="nav-item flex-1 py-3 text-center active" onclick="navigateTo('main')">
-                    <i class="fas fa-gift block mb-1"></i>
-                    <span class="text-xs">동네선물</span>
-                </button>
-                <button class="nav-item flex-1 py-3 text-center" onclick="navigateTo('together')">
-                    <i class="fas fa-user-friends block mb-1"></i>
-                    <span class="text-xs">같이가요</span>
-                </button>
-                <button class="nav-item flex-1 py-3 text-center" onclick="navigateTo('my')">
-                    <i class="fas fa-user block mb-1"></i>
-                    <span class="text-xs">마이페이지</span>
-                </button>
-            </div>
-        </nav>
-
-        <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script src="/static/app.js"></script>
-    </body>
-    </html>
-  `)
-})
+// Serve index.html for root path
+app.get('/', serveStatic({ path: './public/index.html' }))
 
 export default app

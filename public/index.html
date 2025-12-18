@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경험선물 - 근처 엄선된 장소들의 할인 방문권을 선물해요</title>
+    <link rel="stylesheet" href="/static/style.css?v=20241216-105">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 경험선물 메인화면 -->
+    <div id="mainPage" class="page active">
+        <header class="page-header">
+            <div class="header-title">
+                <h1>동네선물</h1>
+                <span class="location-tag"><i class="fas fa-map-marker-alt"></i> 서울시 광진구</span>
+            </div>
+            <p class="header-subtitle">동네 엄선된 장소들을 방문하고 환급 받으세요</p>
+        </header>
+
+        <main class="main-content">
+            <div id="giftCards" class="gift-cards-container">
+                <!-- 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 경험선물 상세화면 -->
+    <div id="detailPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateToMain()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+
+        <main class="detail-content">
+            <div class="image-slider">
+                <div class="slider-container" id="detailSlider">
+                    <!-- 이미지들이 동적으로 추가됩니다 -->
+                </div>
+                <div class="slider-dots" id="detailSliderDots"></div>
+            </div>
+
+            <div class="detail-info">
+                <p class="store-intro" id="detailStoreIntro"></p>
+                <h2 class="detail-product-name" id="detailProductName"></h2>
+                <div class="detail-price-box">
+                    <div class="detail-price-left" id="detailPrice"></div>
+                    <div class="detail-refund-right" id="detailRefundRate"></div>
+                </div>
+
+                <section class="detail-section">
+                    <h4 class="subsection-title">상세 소개</h4>
+                    <div class="section-content" id="detailDescription"></div>
+                </section>
+
+                <section class="detail-section">
+                    <h4 class="subsection-title">가게 정보</h4>
+                    <div class="store-info">
+                        <p class="store-name" id="detailStoreName"></p>
+                        <p class="store-address" id="detailStoreAddress"></p>
+                        <button class="map-button">
+                            <i class="fas fa-map-marked-alt"></i> 네이버지도에서 보기
+                        </button>
+                    </div>
+                </section>
+
+                <section class="gift-section">
+                    <h3 class="section-title">구매하기</h3>
+                    <p class="section-subtitle">나에게 혹은 친구에게 자유롭게 선물하세요</p>
+                    <div class="comments-box" id="detailCommentsBox">
+                        <div class="comments-scroll-trigger" id="commentsScrollTrigger"></div>
+                        <div class="comments-list-container" id="detailCommentsContainer">
+                            <div class="comments-list" id="detailComments">
+                                <!-- 코멘트들이 동적으로 추가됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="group-buy-section">
+                    <div class="section-header-with-button">
+                        <h3 class="section-title">공동구매</h3>
+                        <button class="section-action-button" onclick="createGroupBuy()">신청하기</button>
+                    </div>
+                    <p class="section-subtitle">2명씩 공동구매로 더 많이 환급 받을 수 있어요</p>
+                    <div id="detailGroupBuyCards" class="group-buy-cards">
+                        <!-- 공동구매 카드들이 동적으로 추가됩니다 -->
+                    </div>
+                </section>
+
+                <section class="together-section">
+                    <div class="section-header-with-button">
+                        <h3 class="section-title">같이가요</h3>
+                        <button class="section-action-button" onclick="createTogetherPost()">작성하기</button>
+                    </div>
+                    <p class="section-subtitle">같은 시간에 함께 방문할 사람을 찾아보세요</p>
+                    <div id="detailTogetherCards" class="together-cards">
+                        <!-- 같이가요 카드들이 동적으로 추가됩니다 -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <div class="fixed-purchase-bar">
+            <button class="purchase-button" onclick="openPurchaseModal()">
+                <span class="purchase-text">구매하기 (0원 결제)</span>
+                <span class="purchase-subtext">나에게 혹은 친구에게 자유롭게 선물하세요</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 같이가요 메인화면 -->
+    <div id="togetherPage" class="page">
+        <header class="page-header">
+            <h1>같이가요</h1>
+            <p class="header-subtitle">같은 시간에 함께 방문할 사람을 찾아보세요</p>
+        </header>
+
+        <main class="main-content">
+            <div id="togetherCards" class="together-cards">
+                <!-- 같이가요 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </main>
+
+        <button class="floating-write-button" onclick="createTogetherPost()">
+            <i class="fas fa-pen"></i>
+        </button>
+    </div>
+
+    <!-- 마이페이지 -->
+    <div id="myPage" class="page">
+        <header class="page-header">
+            <h1>마이페이지</h1>
+            <p class="user-info">
+                <span class="nickname">여행좋아</span>
+                <span class="phone" id="userPhone">(로그인 필요)</span>
+            </p>
+        </header>
+
+        <main class="main-content">
+            <div class="menu-list">
+                <button class="menu-item" onclick="navigateToPurchaseHistory()">
+                    <span>구매 내역</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="menu-item" onclick="navigateToMyTogether()">
+                    <span>내가 쓴 같이가요</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="menu-item" onclick="navigateToAppliedTogether()">
+                    <span>신청한 같이가요</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="menu-item" onclick="navigateToMyLikes()">
+                    <span>내 좋아요</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="menu-item" onclick="alert('고객센터 (미구현)')">
+                    <span>고객센터</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="menu-item logout" onclick="alert('로그아웃')">
+                    <span>로그아웃</span>
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- 신청한 같이가요 화면 -->
+    <div id="appliedTogetherPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateToMyPage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="detail-header-title">신청한 같이가요</h2>
+        </div>
+
+        <main class="main-content">
+            <div id="appliedTogetherCards" class="together-cards">
+                <!-- 신청한 같이가요 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 내가 쓴 같이가요 화면 -->
+    <div id="myTogetherPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateToMyPage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="detail-header-title">내가 쓴 같이가요</h2>
+        </div>
+
+        <main class="main-content">
+            <div id="myTogetherCards" class="together-cards">
+                <!-- 내가 쓴 같이가요 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 내 좋아요 화면 -->
+    <div id="myLikesPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateToMyPage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="detail-header-title">내 좋아요</h2>
+        </div>
+
+        <main class="main-content">
+            <!-- 탭 -->
+            <div class="likes-tabs">
+                <button class="likes-tab active" onclick="switchLikesTab('gifts')">동네선물</button>
+                <button class="likes-tab" onclick="switchLikesTab('together')">같이가요</button>
+            </div>
+
+            <!-- 동네선물 좋아요 -->
+            <div id="likedGiftsSection" class="likes-section active">
+                <div id="likedGiftsCards" class="gift-cards">
+                    <!-- 좋아요한 동네선물 카드들이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <!-- 같이가요 좋아요 -->
+            <div id="likedTogetherSection" class="likes-section">
+                <div id="likedTogetherCards" class="together-cards">
+                    <!-- 좋아요한 같이가요 카드들이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 구매 내역 화면 -->
+    <div id="purchaseHistoryPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateToMyPage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="detail-header-title">구매 내역</h2>
+        </div>
+
+        <main class="main-content">
+            <div id="purchaseCards" class="purchase-cards-container">
+                <!-- 구매 내역 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </main>
+    </div>
+
+    <!-- 공동구매 신청 모달 -->
+    <div id="groupBuyModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeGroupBuyModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title">공동구매 신청</h2>
+
+            <div class="group-buy-form">
+                <div class="group-buy-info-box">
+                    <p class="info-label">공동구매 환급률</p>
+                    <p class="info-value" id="groupBuyDiscountRate">20% 할인</p>
+                    <p class="info-label">공동구매 보증금</p>
+                    <p class="info-value deposit-price">2,000원</p>
+                </div>
+
+                <div class="notice-box">
+                    <h4>공동구매 안내</h4>
+                    <ul>
+                        <li>24시간 이내 2명이 모집되면 자동으로 성사됩니다</li>
+                        <li>시간 내 모집 실패 시, 보증금이 자동 환불됩니다</li>
+                        <li>'마이페이지 > 내 구매내역'에서 영수증 제출 후 환급 받으세요</li>
+                    </ul>
+                </div>
+
+                <button class="create-group-buy-button" onclick="confirmGroupBuy()">
+                    공동구매 신청하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 후기 작성 모달 -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeReviewModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title">후기 작성</h2>
+
+            <div class="review-form">
+                <label for="reviewText">추천 코멘트</label>
+                <textarea id="reviewText" rows="5" placeholder="체험 후기를 작성해주세요. 좋은 후기는 다른 고객들에게 큰 도움이 됩니다."></textarea>
+                
+                <button class="submit-review-button" onclick="submitReview()">
+                    후기 등록하기
+                </button>
+
+                <button class="receipt-submit-button" onclick="submitReceipt()">
+                    영수증 사진 제출하고 환급 신청 <i class="fas fa-chevron-right"></i>
+                </button>
+
+                <p class="refund-info">
+                    <i class="fas fa-info-circle"></i>
+                    영수증 제출 후 관리자 확인을 거쳐 환급됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구매 모달 -->
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePurchaseModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title">구매하기</h2>
+
+            <div class="quantity-selector">
+                <label>구매 수량</label>
+                <div class="quantity-controls">
+                    <button onclick="decreaseQuantity()">-</button>
+                    <input type="number" id="quantity" value="1" min="1" readonly>
+                    <button onclick="increaseQuantity()">+</button>
+                </div>
+            </div>
+
+            <div class="total-price">
+                <span>총 결제금액</span>
+                <span id="totalPrice">0원</span>
+            </div>
+
+            <div class="notice-box">
+                <h4>환급 받기 위한 필수 사항</h4>
+                <ol>
+                    <li>결제 전 다른 유저의 후기 중 가장 좋은 것에 공감 표시를 해주세요</li>
+                    <li>추후 '마이페이지 > 내 구매내역'에서 영수증을 제출해 환급 받으세요</li>
+                </ol>
+                <p class="warning">위 사항들을 이행하지 않으면 추후 환급을 받을 수 없습니다</p>
+            </div>
+
+            <div class="modal-comments-box">
+                <div class="comments-list" id="modalComments">
+                    <!-- 코멘트들이 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <p class="reward-info">
+                <i class="fas fa-star"></i> 
+                가장 많은 공감을 받은 추천 후기 작성자는 향후에 사용할 수 있는 5% 포인트가 적립됩니다
+            </p>
+
+            <button id="paymentButton" class="payment-button disabled" disabled onclick="processPayment()">
+                결제하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 같이가요 작성 모달 -->
+    <div id="togetherWriteModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTogetherWriteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title">같이가요 작성</h2>
+
+            <div class="together-write-form">
+                <div class="form-group">
+                    <label for="togetherTitle">제목</label>
+                    <input type="text" id="togetherTitle" placeholder="같이 방문할 사람을 찾는 제목을 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherContent">내용</label>
+                    <textarea id="togetherContent" rows="4" placeholder="함께 가고 싶은 이유나 원하는 분위기를 자유롭게 작성해주세요"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherStore">장소 (가게명)</label>
+                    <input type="text" id="togetherStore" placeholder="방문할 가게명을 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherDate">방문 날짜</label>
+                    <input type="text" id="togetherDate" placeholder="예: 1월 20일 토요일, 2024-01-20 등">
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherTime">방문 시간</label>
+                    <input type="text" id="togetherTime" placeholder="예: 저녁 7시, 19:00 등">
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherPeople">모집 인원</label>
+                    <select id="togetherPeople">
+                        <option value="2명">2명</option>
+                        <option value="3명">3명</option>
+                        <option value="4명">4명</option>
+                        <option value="5명">5명</option>
+                        <option value="6명">6명</option>
+                        <option value="미정">미정</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="togetherQuestion">신청자에게 할 질문</label>
+                    <input type="text" id="togetherQuestion" placeholder="예: 어떤 음식을 좋아하시나요?">
+                </div>
+
+                <h3 class="form-section-title">작성자 정보</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="authorGender">성별</label>
+                        <select id="authorGender">
+                            <option value="">선택</option>
+                            <option value="남">남</option>
+                            <option value="여">여</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="authorAge">연령대</label>
+                        <select id="authorAge">
+                            <option value="">선택</option>
+                            <option value="20대">20대</option>
+                            <option value="30대">30대</option>
+                            <option value="40대">40대</option>
+                            <option value="50대">50대</option>
+                            <option value="60대 이상">60대 이상</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="authorJob">직업 (10자 이내)</label>
+                    <input type="text" id="authorJob" maxlength="10" placeholder="예: 회사원, 학생 등">
+                </div>
+
+                <div class="form-group">
+                    <label for="authorIntro">자기소개 (최소 20자)</label>
+                    <textarea id="authorIntro" rows="4" placeholder="간단한 자기소개를 작성해주세요 (최소 20자)"></textarea>
+                </div>
+
+                <button class="submit-together-button" onclick="submitTogetherPost()">
+                    같이가요 등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 같이가요 신청 모달 -->
+    <div id="togetherApplyModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTogetherApplyModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title">같이가요 신청</h2>
+
+            <div class="together-apply-form">
+                <div class="form-group">
+                    <label id="applyQuestionLabel">작성자 질문</label>
+                    <textarea id="applyAnswer" rows="3" placeholder="질문에 대한 답변을 작성해주세요"></textarea>
+                </div>
+
+                <h3 class="form-section-title">신청자 정보</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="applyGender">성별</label>
+                        <select id="applyGender">
+                            <option value="">선택</option>
+                            <option value="남">남</option>
+                            <option value="여">여</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="applyAge">연령대</label>
+                        <select id="applyAge">
+                            <option value="">선택</option>
+                            <option value="20대">20대</option>
+                            <option value="30대">30대</option>
+                            <option value="40대">40대</option>
+                            <option value="50대">50대</option>
+                            <option value="60대 이상">60대 이상</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="applyJob">직업 (10자 이내)</label>
+                    <input type="text" id="applyJob" maxlength="10" placeholder="예: 회사원, 학생 등">
+                </div>
+
+                <div class="form-group">
+                    <label for="applyIntro">자기소개 (최소 20자)</label>
+                    <textarea id="applyIntro" rows="4" placeholder="간단한 자기소개를 작성해주세요 (최소 20자)"></textarea>
+                </div>
+
+                <button class="submit-together-button" onclick="submitTogetherApply()">
+                    신청 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 참여자 정보 모달 -->
+    <div id="participantInfoModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeParticipantInfoModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <h2 class="modal-title" id="participantNickname">참여자 정보</h2>
+
+            <div class="participant-info-content">
+                <div class="info-section">
+                    <h4>질문 답변</h4>
+                    <p class="question-text" id="participantQuestion"></p>
+                    <p class="answer-text" id="participantAnswer"></p>
+                </div>
+
+                <div class="info-section">
+                    <h4>참여자 정보</h4>
+                    <div class="info-grid">
+                        <div class="info-item-row">
+                            <span class="info-label">성별:</span>
+                            <span class="info-value" id="participantGender"></span>
+                        </div>
+                        <div class="info-item-row">
+                            <span class="info-label">연령대:</span>
+                            <span class="info-value" id="participantAge"></span>
+                        </div>
+                        <div class="info-item-row">
+                            <span class="info-label">직업:</span>
+                            <span class="info-value" id="participantJob"></span>
+                        </div>
+                    </div>
+                    <div class="intro-box">
+                        <p class="intro-text" id="participantIntro"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="participantActions" class="participant-actions">
+                <button class="reject-button" onclick="rejectParticipant()">거절</button>
+                <button class="accept-button" onclick="acceptParticipant()">수락</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원가입/로그인 모달 -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAuthModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-title">회원가입 / 로그인</h2>
+            
+            <div class="form-group">
+                <label>닉네임</label>
+                <input type="text" id="authNickname" placeholder="닉네임을 입력하세요" maxlength="10">
+            </div>
+            
+            <div class="form-group">
+                <label>전화번호</label>
+                <div class="phone-input-group">
+                    <input type="tel" id="authPhone" placeholder="010-1234-5678" maxlength="13">
+                    <button class="verify-button" onclick="requestVerification()">인증하기</button>
+                </div>
+            </div>
+            
+            <div id="verificationSection" class="form-group" style="display: none;">
+                <label>인증번호</label>
+                <div class="phone-input-group">
+                    <input type="text" id="authCode" placeholder="인증번호 6자리" maxlength="6">
+                    <button class="verify-button" onclick="confirmVerification()">확인</button>
+                </div>
+                <p class="verification-notice">SMS로 전송된 인증번호를 입력해주세요</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 같이가요 상세 페이지 -->
+    <div id="togetherDetailPage" class="page">
+        <div class="detail-header">
+            <button class="back-button" onclick="navigateBackFromTogetherDetail()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="detail-header-title">같이가요 상세</h2>
+        </div>
+
+        <main class="detail-content together-detail-content">
+            <div class="together-detail-card">
+                <div class="together-author">
+                    <span class="author-nickname" id="detailAuthorNickname"></span>
+                    <span class="post-time" id="detailPostTime"></span>
+                </div>
+
+                <h2 class="together-title" id="detailTogetherTitle"></h2>
+
+                <div class="together-info-box">
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="detailTogetherDate"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span id="detailTogetherTime"></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-users"></i>
+                        <span id="detailTogetherPeople"></span>
+                    </div>
+                </div>
+
+                <p class="together-content" id="detailTogetherContent"></p>
+
+                <section class="detail-section">
+                    <h4 class="subsection-title">장소 정보</h4>
+                    <div class="store-info">
+                        <p class="store-name" id="detailTogetherStoreName"></p>
+                        <p class="store-address" id="detailTogetherStoreAddress"></p>
+                        <button class="map-button" onclick="openNaverMap()">
+                            <i class="fas fa-map-marked-alt"></i> 네이버지도에서 보기
+                        </button>
+                    </div>
+                </section>
+
+                <section class="detail-section" id="authorInfoSection">
+                    <h4 class="subsection-title">작성자 정보</h4>
+                    <div class="author-info-box">
+                        <div class="info-grid">
+                            <div class="info-item-row">
+                                <span class="info-label">성별:</span>
+                                <span class="info-value" id="detailAuthorGender"></span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="info-label">연령대:</span>
+                                <span class="info-value" id="detailAuthorAge"></span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="info-label">직업:</span>
+                                <span class="info-value" id="detailAuthorJob"></span>
+                            </div>
+                        </div>
+                        <div class="intro-box">
+                            <p class="intro-text" id="detailAuthorIntro"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="together-actions-bottom">
+                    <div class="together-actions-left">
+                        <button class="together-like-button" onclick="toggleTogetherDetailLike()">
+                            <i class="far fa-heart"></i>
+                            <span id="detailTogetherLikes">0</span>
+                        </button>
+                        <button class="together-share-button" onclick="shareTogetherPost()">
+                            <i class="fas fa-share-alt"></i>
+                            <span>공유</span>
+                        </button>
+                    </div>
+                    <button class="together-status-button">모집 중</button>
+                </div>
+
+                <!-- 참여자 목록 (작성자만 볼 수 있음) -->
+                <section class="participants-section" id="participantsSection" style="display: none;">
+                    <h4 class="subsection-title">참여 확정자</h4>
+                    <div id="confirmedParticipants" class="participants-list">
+                        <!-- 참여 확정자 목록 -->
+                    </div>
+
+                    <h4 class="subsection-title" style="margin-top: 24px;">참여 신청자</h4>
+                    <div id="pendingParticipants" class="participants-list">
+                        <!-- 참여 신청자 목록 -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <button class="together-apply-button" onclick="applyTogetherPost()">신청하기</button>
+    </div>
+
+    <!-- 하단 네비게이션 바 -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="navigateTo('main')">
+            <i class="fas fa-gift"></i>
+            <span>동네선물</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('together')">
+            <i class="fas fa-user-friends"></i>
+            <span>같이가요</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('my')">
+            <i class="fas fa-user"></i>
+            <span>마이페이지</span>
+        </button>
+    </nav>
+
+    <script src="/static/data.js?v=20241216-111"></script>
+    <script src="/static/main.js?v=20241216-111"></script>
+</body>
+</html>
