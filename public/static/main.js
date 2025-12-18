@@ -46,33 +46,20 @@ let previousPage = null; // 뒤로 가기를 위한 이전 페이지 추적
 let currentUser = null; // { phoneNumber, nickname }
 let isLoggedIn = false;
 
-// 🔥 Mock 사용자 ID 관리 (로그인 없이 테스트용)
-function getMockUserId() {
-    let userId = localStorage.getItem('mockUserId');
-    if (!userId) {
-        // 처음 방문 시 랜덤 userId 생성 (2-6)
-        userId = Math.floor(Math.random() * 5) + 2;
-        localStorage.setItem('mockUserId', userId);
-        console.log('🆔 새 Mock 사용자 ID 생성:', userId);
-    } else {
-        console.log('🆔 기존 Mock 사용자 ID 사용:', userId);
+// 🔥 현재 로그인된 사용자 ID 가져오기
+function getCurrentUserId() {
+    if (!isLoggedIn || !currentUser) {
+        return null;
     }
-    return parseInt(userId);
+    return currentUser.id;
 }
 
-// 🔥 Mock 사용자 닉네임 가져오기
-async function getMockUserNickname() {
-    const userId = getMockUserId();
-    try {
-        const response = await fetch(`/api/users/${userId}`);
-        const data = await response.json();
-        if (data.success) {
-            return data.data.nickname;
-        }
-    } catch (error) {
-        console.error('Failed to get user nickname:', error);
+// 🔥 현재 로그인된 사용자 닉네임 가져오기
+function getCurrentUserNickname() {
+    if (!isLoggedIn || !currentUser) {
+        return null;
     }
-    return '사용자'; // fallback
+    return currentUser.nickname;
 }
 
 // 사용자 작성 후기 저장 (실제로는 서버에 저장)
@@ -99,11 +86,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // 현재 사용자 정보 표시 (개발용)
-async function displayCurrentUser() {
-    const userId = getMockUserId();
-    const nickname = await getMockUserNickname();
-    console.log(`👤 현재 사용자: ID=${userId}, 닉네임=${nickname}`);
-    console.log(`💡 닉네임 변경: updateUserNickname(${userId}, '새닉네임')`);
+function displayCurrentUser() {
+    if (isLoggedIn && currentUser) {
+        console.log(`👤 현재 로그인 사용자: ID=${currentUser.id}, 닉네임=${currentUser.nickname}, 전화번호=${currentUser.phoneNumber}`);
+    } else {
+        console.log(`❌ 로그인되지 않음 - showAuthModal()로 로그인하세요`);
+    }
 }
 
 // 사용자 닉네임 변경 함수 (개발용 - 브라우저 콘솔에서 사용)
@@ -2000,8 +1988,15 @@ function confirmGroupBuy() {
             return;
         }
         
+        // 🔥 로그인 확인
+        const userId = getCurrentUserId();
+        if (!userId) {
+            alert('로그인이 필요한 기능입니다.');
+            showAuthModal();
+            return;
+        }
+        
         // 🔥 API로 참여 요청
-        const userId = getMockUserId(); // 동일 사용자는 항상 같은 ID 사용
         fetch(`/api/group-buys/${availableGroupBuy.id}/join`, {
             method: 'POST',
             headers: {
@@ -2089,8 +2084,15 @@ function confirmGroupBuy() {
             ? gift.groupBuys[0].discountRate 
             : gift.discountRate + 10;
         
+        // 🔥 로그인 확인
+        const userId = getCurrentUserId();
+        if (!userId) {
+            alert('로그인이 필요한 기능입니다.');
+            showAuthModal();
+            return;
+        }
+        
         // 🔥 API로 공동구매 생성
-        const userId = getMockUserId(); // 동일 사용자는 항상 같은 ID 사용
         fetch('/api/group-buys', {
             method: 'POST',
             headers: {
@@ -2773,8 +2775,8 @@ function formatPhoneNumber(e) {
     }
 }
 
-// 인증 요청
-function requestVerification() {
+// 🔥 인증번호 발송 (실제 API 호출)
+async function requestVerification() {
     const nickname = document.getElementById('authNickname').value.trim();
     const phone = document.getElementById('authPhone').value.trim();
     
@@ -2794,25 +2796,51 @@ function requestVerification() {
         return;
     }
     
-    // 인증번호 생성 (실제로는 서버에서 SMS 발송)
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // 전화번호에서 하이픈 제거
+    const phoneNumber = phone.replace(/-/g, '');
     
-    pendingVerification = {
-        phoneNumber: phone,
-        code: verificationCode,
-        nickname: nickname
-    };
-    
-    // 인증번호 섹션 표시
-    document.getElementById('verificationSection').style.display = 'block';
-    
-    // 개발용: 콘솔에 인증번호 출력
-    console.log('🔐 인증번호:', verificationCode);
-    alert(`인증번호가 전송되었습니다.\n\n[개발용] 인증번호: ${verificationCode}`);
+    try {
+        // API 호출: 인증번호 발송
+        const response = await fetch('/api/auth/send-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phoneNumber: phoneNumber,
+                nickname: nickname
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            pendingVerification = {
+                phoneNumber: phoneNumber,
+                nickname: nickname
+            };
+            
+            // 인증번호 섹션 표시
+            document.getElementById('verificationSection').style.display = 'block';
+            
+            // 개발 환경에서는 콘솔에 인증번호 출력
+            if (data.devCode) {
+                console.log('🔐 [DEV] 인증번호:', data.devCode);
+                alert(`인증번호가 전송되었습니다.\n\n[개발용] 인증번호: ${data.devCode}`);
+            } else {
+                alert('인증번호가 전송되었습니다.\nSMS로 받은 인증번호를 입력해주세요.');
+            }
+        } else {
+            alert(`오류: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('❌ 인증번호 발송 실패:', error);
+        alert('인증번호 발송에 실패했습니다. 다시 시도해주세요.');
+    }
 }
 
-// 인증 확인
-function confirmVerification() {
+// 🔥 인증번호 확인 (실제 API 호출)
+async function confirmVerification() {
     const inputCode = document.getElementById('authCode').value.trim();
     
     if (!inputCode) {
@@ -2825,65 +2853,50 @@ function confirmVerification() {
         return;
     }
     
-    // 인증번호 확인
-    if (inputCode === pendingVerification.code) {
-        // 인증 성공
-        processLogin(pendingVerification.phoneNumber, pendingVerification.nickname);
-    } else {
-        alert('인증번호가 일치하지 않습니다.');
+    try {
+        // API 호출: 인증번호 검증 및 로그인
+        const response = await fetch('/api/auth/verify-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phoneNumber: pendingVerification.phoneNumber,
+                code: inputCode
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // 인증 성공 - 로그인 처리
+            processLogin(data.user.id, data.user.phoneNumber, data.user.nickname);
+        } else {
+            alert(`오류: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('❌ 인증 확인 실패:', error);
+        alert('인증 확인에 실패했습니다. 다시 시도해주세요.');
     }
 }
 
-// 로그인 처리
-function processLogin(phoneNumber, nickname) {
-    const phoneKey = phoneNumber.replace(/-/g, '');
-    
-    // 기존 사용자 확인
-    const existingUser = usersDatabase[phoneKey];
-    
-    let isNewUser = false;
-    
-    if (existingUser) {
-        // 기존 사용자 - 닉네임 변경 확인
-        const oldNickname = existingUser.nickname;
-        
-        if (oldNickname !== nickname) {
-            // 닉네임이 변경됨 - 모든 데이터 업데이트
-            updateUserDataNickname(oldNickname, nickname);
-        }
-        
-        // 사용자 정보 업데이트
-        existingUser.nickname = nickname;
-    } else {
-        // 신규 사용자
-        isNewUser = true;
-        usersDatabase[phoneKey] = {
-            phoneNumber: phoneNumber,
-            nickname: nickname
-        };
-        
-        // 좋아요 데이터 초기화
-        userLikesDatabase[phoneKey] = {
-            gifts: [],
-            togetherPosts: []
-        };
-    }
+// 🔥 로그인 처리 (실제 userId 사용)
+function processLogin(userId, phoneNumber, nickname) {
+    // Mock userId 삭제 (더 이상 사용하지 않음)
+    localStorage.removeItem('mockUserId');
     
     // 현재 사용자 설정
     currentUser = {
+        id: userId,
         phoneNumber: phoneNumber,
         nickname: nickname
     };
     isLoggedIn = true;
     
-    // 로컬스토리지에 저장
+    // localStorage에 저장
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    // 사용자의 좋아요 데이터 로드
-    if (userLikesDatabase[phoneKey]) {
-        userLikes.gifts = [...userLikesDatabase[phoneKey].gifts];
-        userLikes.togetherPosts = [...userLikesDatabase[phoneKey].togetherPosts];
-    }
+    console.log(`✅ 로그인 성공: ${nickname} (userId: ${userId})`);
     
     // 모달 먼저 닫기
     closeAuthModal();
@@ -2898,11 +2911,9 @@ function processLogin(phoneNumber, nickname) {
     
     // 로그인 완료 알림 (모달 닫힌 후)
     setTimeout(() => {
-        if (isNewUser) {
-            alert(`🎉 회원가입이 완료되었습니다!\n\n${nickname}님, 환영합니다!`);
-        } else {
-            alert(`${nickname}님, 다시 오신 것을 환영합니다! 😊`);
-        }
+        alert(`${nickname}님, 환영합니다! 😊`);
+        // 페이지 새로고침하여 최신 데이터 반영
+        location.reload();
     }, 100);
 }
 

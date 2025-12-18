@@ -3,14 +3,155 @@ import { cors } from 'hono/cors'
 
 type Bindings = {
   DB: D1Database;
+  NHN_CLOUD_APP_KEY?: string;
+  NHN_CLOUD_SECRET_KEY?: string;
+  NHN_CLOUD_SENDER_NUMBER?: string;
+  SESSION_SECRET?: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
+
+// 🔥 인증번호 저장소 (메모리 기반 - 실제 운영에서는 Redis나 KV 사용 권장)
+const verificationCodes = new Map<string, { code: string; expiresAt: number; nickname: string }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors())
 
 // ===== API Routes =====
+
+// 🔥 SMS 인증번호 발송
+app.post('/api/auth/send-code', async (c) => {
+  try {
+    const { phoneNumber, nickname } = await c.req.json()
+    
+    if (!phoneNumber || !nickname) {
+      return c.json({ success: false, error: '전화번호와 닉네임을 입력해주세요' }, 400)
+    }
+    
+    // 인증번호 생성 (6자리)
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    
+    // 인증번호 저장 (5분 유효)
+    const expiresAt = Date.now() + 5 * 60 * 1000
+    verificationCodes.set(phoneNumber, { code, expiresAt, nickname })
+    
+    console.log(`📱 [DEV] 인증번호 발송: ${phoneNumber} -> ${code}`)
+    
+    // 🔥 NHN Cloud SMS API 호출 (실제 환경)
+    if (c.env.NHN_CLOUD_APP_KEY && c.env.NHN_CLOUD_SENDER_NUMBER) {
+      try {
+        const nhnResponse = await fetch('https://api-sms.cloud.toast.com/sms/v3.0/appKeys/' + c.env.NHN_CLOUD_APP_KEY + '/sender/sms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json;charset=UTF-8'
+          },
+          body: JSON.stringify({
+            body: `[동네선물] 인증번호는 [${code}]입니다. 5분 이내에 입력해주세요.`,
+            sendNo: c.env.NHN_CLOUD_SENDER_NUMBER,
+            recipientList: [
+              {
+                recipientNo: phoneNumber,
+                internationalRecipientNo: phoneNumber
+              }
+            ]
+          })
+        })
+        
+        const nhnData = await nhnResponse.json()
+        console.log('📨 NHN Cloud SMS Response:', nhnData)
+      } catch (error) {
+        console.error('❌ NHN Cloud SMS Error:', error)
+        // SMS 발송 실패해도 개발 환경에서는 계속 진행
+      }
+    }
+    
+    return c.json({ 
+      success: true, 
+      message: '인증번호가 발송되었습니다',
+      // 개발 환경에서만 코드 반환
+      devCode: !c.env.NHN_CLOUD_APP_KEY ? code : undefined
+    })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// 🔥 인증번호 검증 및 로그인
+app.post('/api/auth/verify-code', async (c) => {
+  try {
+    const { phoneNumber, code } = await c.req.json()
+    
+    if (!phoneNumber || !code) {
+      return c.json({ success: false, error: '전화번호와 인증번호를 입력해주세요' }, 400)
+    }
+    
+    // 인증번호 확인
+    const stored = verificationCodes.get(phoneNumber)
+    
+    if (!stored) {
+      return c.json({ success: false, error: '인증번호를 먼저 요청해주세요' }, 400)
+    }
+    
+    if (stored.expiresAt < Date.now()) {
+      verificationCodes.delete(phoneNumber)
+      return c.json({ success: false, error: '인증번호가 만료되었습니다' }, 400)
+    }
+    
+    if (stored.code !== code) {
+      return c.json({ success: false, error: '인증번호가 일치하지 않습니다' }, 400)
+    }
+    
+    // 인증 성공 - 사용자 확인 또는 생성
+    let user = await c.env.DB.prepare(`
+      SELECT * FROM users WHERE phone_number = ?
+    `).bind(phoneNumber).first() as any
+    
+    if (user) {
+      // 기존 사용자 - 닉네임 업데이트
+      const oldNickname = user.nickname
+      const newNickname = stored.nickname
+      
+      if (oldNickname !== newNickname) {
+        // 닉네임 변경됨 - users 테이블 업데이트
+        await c.env.DB.prepare(`
+          UPDATE users SET nickname = ? WHERE id = ?
+        `).bind(newNickname, user.id).run()
+        
+        console.log(`📝 닉네임 변경: ${oldNickname} -> ${newNickname} (userId: ${user.id})`)
+      }
+      
+      user.nickname = newNickname
+    } else {
+      // 신규 사용자 - 생성
+      const result = await c.env.DB.prepare(`
+        INSERT INTO users (phone_number, nickname) VALUES (?, ?)
+      `).bind(phoneNumber, stored.nickname).run()
+      
+      user = {
+        id: result.meta.last_row_id,
+        phone_number: phoneNumber,
+        nickname: stored.nickname
+      }
+      
+      console.log(`🆕 신규 사용자 생성: ${user.nickname} (userId: ${user.id})`)
+    }
+    
+    // 인증번호 삭제
+    verificationCodes.delete(phoneNumber)
+    
+    return c.json({ 
+      success: true, 
+      message: '로그인 성공',
+      user: {
+        id: user.id,
+        phoneNumber: user.phone_number,
+        nickname: user.nickname
+      }
+    })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
 
 // Get all gifts
 app.get('/api/gifts', async (c) => {
