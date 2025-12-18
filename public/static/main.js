@@ -1929,32 +1929,55 @@ function confirmGroupBuy() {
             return;
         }
         
-        // 사용자 추가
-        availableGroupBuy.users.push({ 
-            initial: "나", 
-            color: "#6C8FD9" 
+        // 🔥 API로 참여 요청
+        const userId = 1; // Mock user ID
+        fetch(`/api/group-buys/${availableGroupBuy.id}/join`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ 공동구매 참여 성공');
+                
+                // 사용자 추가
+                availableGroupBuy.users.push({ 
+                    initial: "나", 
+                    color: "#6C8FD9" 
+                });
+                
+                // 공동구매 완료 처리
+                availableGroupBuy.isComplete = true;
+                availableGroupBuy.endTime = null;
+                
+                // 구매 내역에 추가 (공동구매)
+                addToPurchaseHistory(gift, 1, true, availableGroupBuy.discountRate);
+                
+                // localStorage에 저장
+                saveSampleGifts();
+                
+                // 화면 업데이트
+                renderGroupBuyCards(gift.groupBuys);
+                
+                // 모달 먼저 닫기
+                closeGroupBuyModal();
+                
+                // 공동구매 성사 팝업 표시 (약간의 딜레이 후)
+                setTimeout(() => {
+                    alert('🎉 공동구매 성사!\n\n2명이 모두 모집되었습니다.\n구매 내역에서 확인하실 수 있습니다.');
+                }, 300);
+            } else {
+                console.error('❌ 공동구매 참여 실패:', data.error);
+                alert('공동구매 참여에 실패했습니다. 다시 시도해주세요.');
+            }
+        })
+        .catch(error => {
+            console.error('❌ API 호출 실패:', error);
+            alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
         });
-        
-        // 공동구매 완료 처리
-        availableGroupBuy.isComplete = true;
-        availableGroupBuy.endTime = null;
-        
-        // 구매 내역에 추가 (공동구매)
-        addToPurchaseHistory(gift, 1, true, availableGroupBuy.discountRate);
-        
-        // 🔥 localStorage에 저장
-        saveSampleGifts();
-        
-        // 화면 업데이트
-        renderGroupBuyCards(gift.groupBuys);
-        
-        // 모달 먼저 닫기
-        closeGroupBuyModal();
-        
-        // 공동구매 성사 팝업 표시 (약간의 딜레이 후)
-        setTimeout(() => {
-            alert('🎉 공동구매 성사!\n\n2명이 모두 모집되었습니다.\n구매 내역에서 확인하실 수 있습니다.');
-        }, 300);
         
     } else {
         // 새로운 공동구매 생성
@@ -1962,33 +1985,65 @@ function confirmGroupBuy() {
             return;
         }
         
-        const newGroupBuy = {
-            id: Date.now(),
-            createdAt: new Date().toLocaleString('ko-KR', { 
-                year: 'numeric', 
-                month: '2-digit', 
-                day: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }).replace(/\. /g, '-').replace('.', ''),
-            discountRate: gift.groupBuys && gift.groupBuys.length > 0 
-                ? gift.groupBuys[0].discountRate 
-                : gift.discountRate + 5,
-            users: [
-                { initial: "나", color: "#4A90E2" }
-            ],
-            isComplete: false,
-            endTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24시간 후
-        };
+        const discountRate = gift.groupBuys && gift.groupBuys.length > 0 
+            ? gift.groupBuys[0].discountRate 
+            : gift.discountRate + 10;
         
-        // 공동구매 목록에 추가
-        gift.groupBuys.unshift(newGroupBuy);
-        
-        // 🔥 localStorage에 저장
-        saveSampleGifts();
-        
-        // 화면 업데이트
-        renderGroupBuyCards(gift.groupBuys);
+        // 🔥 API로 공동구매 생성
+        const userId = 1; // Mock user ID
+        fetch('/api/group-buys', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                giftId: gift.id,
+                userId: userId,
+                discountRate: discountRate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ 공동구매 생성 성공:', data.data.id);
+                
+                const newGroupBuy = {
+                    id: data.data.id,
+                    createdAt: new Date().toLocaleString('ko-KR', { 
+                        year: 'numeric', 
+                        month: '2-digit', 
+                        day: '2-digit', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }).replace(/\. /g, '-').replace('.', ''),
+                    discountRate: discountRate,
+                    users: [
+                        { initial: "나", color: "#4A90E2" }
+                    ],
+                    isComplete: false,
+                    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24시간 후
+                };
+                
+                // 공동구매 목록에 추가
+                gift.groupBuys.unshift(newGroupBuy);
+                
+                // localStorage에 저장
+                saveSampleGifts();
+                
+                // 화면 업데이트
+                renderGroupBuyCards(gift.groupBuys);
+                
+                alert('공동구매 신청이 완료되었습니다!\n\n24시간 이내 함께 구매할 사람이 모집되면 자동으로 결제가 진행됩니다.');
+                closeGroupBuyModal();
+            } else {
+                console.error('❌ 공동구매 생성 실패:', data.error);
+                alert('공동구매 신청에 실패했습니다. 다시 시도해주세요.');
+            }
+        })
+        .catch(error => {
+            console.error('❌ API 호출 실패:', error);
+            alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        });
         
         // 카운트다운 시작
         startCountdowns();
@@ -2184,35 +2239,76 @@ function submitTogetherPost() {
         likes: 0
     };
     
-    // 전체 같이가요 목록에 추가
-    togetherPosts.unshift(newPost);
+    // 🔥 API로 전송
+    const giftId = relatedGift ? relatedGift.id : 1; // Default to first gift if not found
+    const userId = 1; // Mock user ID
     
-    // 참여자 목록 초기화
-    togetherApplications[newPost.id] = {
-        confirmed: [],
-        pending: []
-    };
-    
-    // 현재 보고 있는 상품의 같이가요에도 추가 (연관 가게인 경우)
-    if (currentGiftId && relatedGift && relatedGift.id === currentGiftId) {
-        if (!relatedGift.togetherPosts) {
-            relatedGift.togetherPosts = [];
+    fetch('/api/together-posts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            giftId: giftId,
+            userId: userId,
+            title: title,
+            content: content,
+            visitDate: date,
+            visitTime: time,
+            peopleCount: people,
+            question: question,
+            authorInfo: {
+                gender: gender,
+                age: age,
+                job: job,
+                intro: intro
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ 같이가요 게시글이 서버에 저장되었습니다:', data.data.id);
+            
+            // 로컬 데이터에도 추가 (ID는 서버에서 받은 것으로)
+            newPost.id = data.data.id;
+            togetherPosts.unshift(newPost);
+            
+            // 참여자 목록 초기화
+            togetherApplications[newPost.id] = {
+                confirmed: [],
+                pending: []
+            };
+            
+            // 현재 보고 있는 상품의 같이가요에도 추가 (연관 가게인 경우)
+            if (currentGiftId && relatedGift && relatedGift.id === currentGiftId) {
+                if (!relatedGift.togetherPosts) {
+                    relatedGift.togetherPosts = [];
+                }
+                relatedGift.togetherPosts.unshift(newPost);
+                
+                // 상세 페이지의 같이가요 카드 업데이트
+                renderTogetherCardsInDetail(relatedGift.togetherPosts);
+            }
+            
+            // 같이가요 메인 화면 업데이트
+            renderTogetherCards();
+            
+            // localStorage에 전체 같이가요 목록 저장
+            localStorage.setItem('togetherPosts', JSON.stringify(togetherPosts));
+            console.log('✅ 같이가요 목록 저장됨:', togetherPosts.length, '개');
+            
+            alert('같이가요 게시글이 등록되었습니다!');
+            closeTogetherWriteModal();
+        } else {
+            console.error('❌ 게시글 저장 실패:', data.error);
+            alert('게시글 등록에 실패했습니다. 다시 시도해주세요.');
         }
-        relatedGift.togetherPosts.unshift(newPost);
-        
-        // 상세 페이지의 같이가요 카드 업데이트
-        renderTogetherCardsInDetail(relatedGift.togetherPosts);
-    }
-    
-    // 같이가요 메인 화면 업데이트
-    renderTogetherCards();
-    
-    // 🔥 localStorage에 전체 같이가요 목록 저장
-    localStorage.setItem('togetherPosts', JSON.stringify(togetherPosts));
-    console.log('✅ 같이가요 목록 저장됨:', togetherPosts.length, '개');
-    
-    alert('같이가요 게시글이 등록되었습니다!');
-    closeTogetherWriteModal();
+    })
+    .catch(error => {
+        console.error('❌ API 호출 실패:', error);
+        alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+    });
 }
 
 function writeReview(code) {
