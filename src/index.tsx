@@ -118,6 +118,7 @@ app.post('/api/group-buys/:id/join', async (c) => {
     const id = c.req.param('id')
     const { userId } = await c.req.json()
     
+    // 🔥 같은 사용자가 자신의 공동구매에 참여 가능 (2인분 구매)
     // Update group buy to complete
     await c.env.DB.prepare(`
       UPDATE group_buys 

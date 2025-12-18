@@ -46,6 +46,18 @@ let previousPage = null; // 뒤로 가기를 위한 이전 페이지 추적
 let currentUser = null; // { phoneNumber, nickname }
 let isLoggedIn = false;
 
+// 🔥 Mock 사용자 ID 관리 (로그인 없이 테스트용)
+function getMockUserId() {
+    let userId = localStorage.getItem('mockUserId');
+    if (!userId) {
+        // 처음 방문 시 랜덤 userId 생성 (2-6)
+        userId = Math.floor(Math.random() * 5) + 2;
+        localStorage.setItem('mockUserId', userId);
+        console.log('🆔 새 Mock 사용자 ID 생성:', userId);
+    }
+    return parseInt(userId);
+}
+
 // 사용자 작성 후기 저장 (실제로는 서버에 저장)
 let userReviews = [];
 
@@ -1941,8 +1953,7 @@ function confirmGroupBuy() {
         }
         
         // 🔥 API로 참여 요청
-        // Mock user ID: 로그인 없이 테스트하기 위해 랜덤 userId 생성 (2-6)
-        const userId = Math.floor(Math.random() * 5) + 2;
+        const userId = getMockUserId(); // 동일 사용자는 항상 같은 ID 사용
         fetch(`/api/group-buys/${availableGroupBuy.id}/join`, {
             method: 'POST',
             headers: {
@@ -2031,8 +2042,7 @@ function confirmGroupBuy() {
             : gift.discountRate + 10;
         
         // 🔥 API로 공동구매 생성
-        // Mock user ID: 로그인 없이 테스트하기 위해 랜덤 userId 생성 (2-6)
-        const userId = Math.floor(Math.random() * 5) + 2;
+        const userId = getMockUserId(); // 동일 사용자는 항상 같은 ID 사용
         fetch('/api/group-buys', {
             method: 'POST',
             headers: {
