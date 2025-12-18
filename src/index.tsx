@@ -1,7 +1,5 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { serveStatic } from 'hono/cloudflare-workers'
-import { readFile } from 'fs/promises'
 
 type Bindings = {
   DB: D1Database;
@@ -11,9 +9,6 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors())
-
-// Serve static files
-app.use('/static/*', serveStatic({ root: './public' }))
 
 // ===== API Routes =====
 
@@ -293,7 +288,7 @@ app.get('/api/users/:userId/likes', async (c) => {
 })
 
 // ===== Frontend =====
-// Serve index.html for root path
-app.get('/', serveStatic({ path: './public/index.html' }))
+// Note: Static files (index.html, CSS, JS) are served directly by Cloudflare Pages
+// They are in the dist folder after build
 
 export default app
