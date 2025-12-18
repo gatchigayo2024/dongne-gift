@@ -307,12 +307,15 @@ async function showDetail(giftId) {
                 isComplete: gb.is_complete === 1,
                 endTime: gb.expires_at ? new Date(gb.expires_at) : null
             }));
-            if (apiGift.groupBuys.length > 0 && apiGift.groupBuys[0].partner_nickname) {
-                gift.groupBuys[0].users.push({
-                    initial: apiGift.groupBuys[0].partner_nickname[0],
-                    color: "#5B7FE8"
-                });
-            }
+            // Add partner user if exists
+            apiGift.groupBuys.forEach((gb, index) => {
+                if (gb.partner_nickname) {
+                    gift.groupBuys[index].users.push({
+                        initial: gb.partner_nickname[0],
+                        color: "#5B7FE8"
+                    });
+                }
+            });
             gift.togetherPosts = apiGift.togetherPosts.map(tp => ({
                 id: tp.id,
                 nickname: tp.nickname,
@@ -326,6 +329,14 @@ async function showDetail(giftId) {
                 storeAddress: apiGift.address,
                 likes: tp.likes
             }));
+            
+            // 🔥 중요: sampleGifts 배열 업데이트 (페이지 이동 후에도 데이터 유지)
+            const giftIndex = sampleGifts.findIndex(g => g.id === giftId);
+            if (giftIndex !== -1) {
+                sampleGifts[giftIndex] = gift;
+                saveSampleGifts(); // localStorage에도 저장
+            }
+            console.log('✅ API에서 최신 데이터 로드 완료:', giftId);
         }
     } catch (error) {
         console.error('Failed to load gift details:', error);
@@ -1939,25 +1950,54 @@ function confirmGroupBuy() {
             body: JSON.stringify({ userId: userId })
         })
         .then(response => response.json())
-        .then(data => {
+        .then(async data => {
             if (data.success) {
                 console.log('✅ 공동구매 참여 성공');
                 
-                // 사용자 추가
-                availableGroupBuy.users.push({ 
-                    initial: "나", 
-                    color: "#6C8FD9" 
-                });
+                // 🔥 API에서 최신 데이터 다시 가져오기
+                const detailResponse = await fetch(`/api/gifts/${gift.id}`);
+                const detailData = await detailResponse.json();
                 
-                // 공동구매 완료 처리
-                availableGroupBuy.isComplete = true;
-                availableGroupBuy.endTime = null;
+                if (detailData.success) {
+                    const apiGift = detailData.data;
+                    // 공동구매 데이터 업데이트
+                    gift.groupBuys = apiGift.groupBuys.map(gb => ({
+                        id: gb.id,
+                        createdAt: gb.created_at,
+                        discountRate: gb.discount_rate,
+                        users: [
+                            { initial: gb.creator_nickname[0], color: "#4A90E2" }
+                        ],
+                        isComplete: gb.is_complete === 1,
+                        endTime: gb.expires_at ? new Date(gb.expires_at) : null
+                    }));
+                    // Add partner user if exists
+                    apiGift.groupBuys.forEach((gb, index) => {
+                        if (gb.partner_nickname) {
+                            gift.groupBuys[index].users.push({
+                                initial: gb.partner_nickname[0],
+                                color: "#5B7FE8"
+                            });
+                        }
+                    });
+                    
+                    // sampleGifts 배열 업데이트
+                    const giftIndex = sampleGifts.findIndex(g => g.id === gift.id);
+                    if (giftIndex !== -1) {
+                        sampleGifts[giftIndex].groupBuys = gift.groupBuys;
+                    }
+                    
+                    // localStorage에 저장
+                    saveSampleGifts();
+                    
+                    console.log('✅ 공동구매 최신 데이터 반영 완료');
+                }
                 
                 // 구매 내역에 추가 (공동구매)
-                addToPurchaseHistory(gift, 1, true, availableGroupBuy.discountRate);
-                
-                // localStorage에 저장
-                saveSampleGifts();
+                const completedGroupBuy = gift.groupBuys.find(gb => gb.id === availableGroupBuy.id);
+                if (completedGroupBuy) {
+                    addToPurchaseHistory(gift, 1, true, completedGroupBuy.discountRate);
+                }
                 
                 // 화면 업데이트
                 renderGroupBuyCards(gift.groupBuys);
