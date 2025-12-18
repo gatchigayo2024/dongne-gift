@@ -292,7 +292,7 @@ async function showDetail(giftId) {
             // Update gift with API data
             gift.comments = apiGift.comments.map(c => ({
                 nickname: c.nickname,
-                date: c.created_at,
+                date: c.created_at ? c.created_at.split(' ')[0] : c.created_at, // Extract date only (YYYY-MM-DD)
                 purchases: 1,
                 comment: c.comment,
                 empathy: c.empathy
