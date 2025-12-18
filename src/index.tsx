@@ -132,6 +132,40 @@ app.post('/api/group-buys/:id/join', async (c) => {
   }
 })
 
+// Get user by ID
+app.get('/api/users/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const user = await c.env.DB.prepare(`
+      SELECT id, nickname, phone_number FROM users WHERE id = ?
+    `).bind(id).first()
+    
+    if (!user) {
+      return c.json({ success: false, error: 'User not found' }, 404)
+    }
+    
+    return c.json({ success: true, data: user })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// Update user nickname
+app.put('/api/users/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const { nickname } = await c.req.json()
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET nickname = ? WHERE id = ?
+    `).bind(nickname, id).run()
+    
+    return c.json({ success: true })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
 // Get all together posts
 app.get('/api/together-posts', async (c) => {
   try {

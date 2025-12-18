@@ -54,8 +54,25 @@ function getMockUserId() {
         userId = Math.floor(Math.random() * 5) + 2;
         localStorage.setItem('mockUserId', userId);
         console.log('🆔 새 Mock 사용자 ID 생성:', userId);
+    } else {
+        console.log('🆔 기존 Mock 사용자 ID 사용:', userId);
     }
     return parseInt(userId);
+}
+
+// 🔥 Mock 사용자 닉네임 가져오기
+async function getMockUserNickname() {
+    const userId = getMockUserId();
+    try {
+        const response = await fetch(`/api/users/${userId}`);
+        const data = await response.json();
+        if (data.success) {
+            return data.data.nickname;
+        }
+    } catch (error) {
+        console.error('Failed to get user nickname:', error);
+    }
+    return '사용자'; // fallback
 }
 
 // 사용자 작성 후기 저장 (실제로는 서버에 저장)
@@ -73,10 +90,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 로그인 상태 복원
     restoreLoginState();
     
+    // 🔥 현재 사용자 정보 표시 (개발용)
+    displayCurrentUser();
+    
     renderGiftCards();
     renderTogetherCards();
     renderPurchaseHistory();
 });
+
+// 현재 사용자 정보 표시 (개발용)
+async function displayCurrentUser() {
+    const userId = getMockUserId();
+    const nickname = await getMockUserNickname();
+    console.log(`👤 현재 사용자: ID=${userId}, 닉네임=${nickname}`);
+    console.log(`💡 닉네임 변경: updateUserNickname(${userId}, '새닉네임')`);
+}
+
+// 사용자 닉네임 변경 함수 (개발용 - 브라우저 콘솔에서 사용)
+window.updateUserNickname = async function(userId, newNickname) {
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname: newNickname })
+        });
+        const data = await response.json();
+        if (data.success) {
+            console.log(`✅ 닉네임 변경 성공: ${newNickname}`);
+            location.reload();
+        } else {
+            console.error('❌ 닉네임 변경 실패:', data.error);
+        }
+    } catch (error) {
+        console.error('❌ API 호출 실패:', error);
+    }
+}
 
 // 경험선물 카드 렌더링
 function renderGiftCards() {
