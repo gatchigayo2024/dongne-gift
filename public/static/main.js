@@ -1941,7 +1941,8 @@ function confirmGroupBuy() {
         }
         
         // 🔥 API로 참여 요청
-        const userId = 1; // Mock user ID
+        // Mock user ID: 로그인 없이 테스트하기 위해 랜덤 userId 생성 (2-6)
+        const userId = Math.floor(Math.random() * 5) + 2;
         fetch(`/api/group-buys/${availableGroupBuy.id}/join`, {
             method: 'POST',
             headers: {
@@ -2030,7 +2031,8 @@ function confirmGroupBuy() {
             : gift.discountRate + 10;
         
         // 🔥 API로 공동구매 생성
-        const userId = 1; // Mock user ID
+        // Mock user ID: 로그인 없이 테스트하기 위해 랜덤 userId 생성 (2-6)
+        const userId = Math.floor(Math.random() * 5) + 2;
         fetch('/api/group-buys', {
             method: 'POST',
             headers: {
