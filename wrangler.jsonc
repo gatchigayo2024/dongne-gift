@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
+  "name": "dongne-gift",
   "compatibility_date": "2025-12-18",
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
@@ -9,8 +9,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "webapp-production",
-      "database_id": "placeholder-for-local-dev"
+      "database_name": "dongne-gift-production",
+      "database_id": "613c2e9e-c97f-4272-9d72-3a38c145cb61"
     }
   ]
 }
