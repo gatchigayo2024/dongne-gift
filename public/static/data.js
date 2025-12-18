@@ -400,7 +400,8 @@ let togetherApplications = {
 };
 
 // 같이가요 전체 목록 (사용자가 작성 시 동적으로 추가됨)
-let togetherPosts = [
+// 백업용 데이터 (API 실패 시 사용)
+const togetherPostsBackup = [
     {
         id: 101,
         nickname: "맛집탐험가",
