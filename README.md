@@ -5,7 +5,7 @@
 - **목표**: 지역 맛집, 스파, 카페 등의 할인 방문권을 판매하고 공동구매 및 함께 방문할 사람을 찾는 플랫폼
 - **주요 기능**:
   - 동네선물: 지역 체험 선물 상품 목록 및 상세 정보
-  - 공동구매: 2명이 함께 구매하여 추가 할인 (24시간 제한)
+  - 공동구매: 3명이 함께 구매하여 추가 할인 (24시간 제한)
   - 같이가요: 같은 시간에 함께 방문할 사람 찾기
   - 좋아요 및 댓글 시스템
   - 구매 내역 및 신청 내역 관리
@@ -14,23 +14,28 @@
 ## 현재 완료된 기능 ✅
 
 ### 백엔드 (Hono + Cloudflare D1)
+- ✅ 전화번호 인증 시스템 (NHN Cloud SMS API 연동)
 - ✅ 선물 목록 조회 API (`GET /api/gifts`)
 - ✅ 선물 상세 정보 API (`GET /api/gifts/:id`)
 - ✅ 공동구매 생성 API (`POST /api/group-buys`)
-- ✅ 공동구매 참여 API (`POST /api/group-buys/:id/join`)
+- ✅ 공동구매 참여 API (3명 시스템) (`POST /api/group-buys/:id/join`)
 - ✅ 같이가요 목록 조회 API (`GET /api/together-posts`)
 - ✅ 같이가요 상세 조회 API (`GET /api/together-posts/:id`)
 - ✅ 같이가요 작성 API (`POST /api/together-posts`)
 - ✅ 같이가요 신청 API (`POST /api/together-posts/:id/apply`)
 - ✅ 좋아요 토글 API (`POST /api/likes`)
 - ✅ 사용자 좋아요 목록 API (`GET /api/users/:userId/likes`)
+- ✅ 사용자 닉네임 업데이트 API (`PUT /api/users/:id`)
 
 ### 프론트엔드 (원본 디자인 완전 복원)
+- ✅ 전화번호 인증 UI (SMS 인증번호 입력)
+- ✅ 닉네임 설정 및 변경
+- ✅ 사용자 세션 관리 (로그인 상태 유지)
 - ✅ 반응형 UI (모바일 최적화)
 - ✅ 이미지 슬라이더
 - ✅ 동네선물 카드 리스트
 - ✅ 상세 페이지 (이미지, 가격, 설명, 후기)
-- ✅ 공동구매 신청/참여 모달
+- ✅ 공동구매 신청/참여 모달 (3명 아바타 표시)
 - ✅ 같이가요 작성/신청 모달
 - ✅ 마이페이지 (구매내역, 같이가요 관리, 좋아요)
 - ✅ 하단 네비게이션
@@ -72,7 +77,7 @@ GET  /api/users/:userId/likes  # 사용자 좋아요 목록
 - **users**: 사용자 정보 (전화번호, 닉네임)
 - **gifts**: 선물 상품 (가게정보, 가격, 할인율, 이미지)
 - **gift_comments**: 선물 상품 댓글/후기
-- **group_buys**: 공동구매 (생성자, 파트너, 할인율, 만료시간)
+- **group_buys**: 공동구매 (생성자, partner, partner2 - 3명 시스템)
 - **together_posts**: 같이가요 게시글 (제목, 내용, 방문일시, 작성자정보)
 - **together_applications**: 같이가요 신청 (신청자, 답변, 승인상태)
 - **user_likes**: 사용자 좋아요 (선물/게시글)
@@ -101,21 +106,21 @@ GET  /api/users/:userId/likes  # 사용자 좋아요 목록
    - 내 좋아요: 좋아요한 선물 및 게시글
 
 ## 아직 구현되지 않은 기능 ❌
-- ❌ 사용자 인증/로그인 시스템 (현재 mock 사용자)
 - ❌ 실제 결제 기능 (토스페이먼츠, 카카오페이 등)
 - ❌ 네이버 지도 연동
 - ❌ 영수증 사진 업로드 및 환급 신청
 - ❌ 실시간 알림 (새 신청, 매칭 완료 등)
 - ❌ 프로필 사진 업로드
 - ❌ 관리자 페이지
+- ❌ 프로덕션 SMS 발송 (NHN Cloud 환경변수 설정 필요)
 
 ## 추천 다음 단계
-1. **사용자 인증**: 전화번호 인증 시스템 구현 (SMS API 연동)
-2. **결제 연동**: 토스페이먼츠 또는 카카오페이 연동
-3. **네이버 지도**: 네이버 지도 API 연동 (가게 위치 표시)
-4. **파일 업로드**: Cloudflare R2 연동 (영수증, 프로필 사진)
-5. **실시간 알림**: WebSocket 또는 Server-Sent Events
-6. **관리자 페이지**: 상품 등록/수정/삭제, 환급 승인 등
+1. **결제 연동**: 토스페이먼츠 또는 카카오페이 연동
+2. **네이버 지도**: 네이버 지도 API 연동 (가게 위치 표시)
+3. **파일 업로드**: Cloudflare R2 연동 (영수증, 프로필 사진)
+4. **실시간 알림**: WebSocket 또는 Server-Sent Events
+5. **관리자 페이지**: 상품 등록/수정/삭제, 환급 승인 등
+6. **NHN Cloud SMS 환경변수**: 프로덕션 SMS 발송 활성화
 
 ## 로컬 개발
 
@@ -151,27 +156,21 @@ pm2 delete webapp
 
 ## 프로덕션 배포
 
-### Cloudflare Pages 배포 준비
-```bash
-# 1. D1 데이터베이스 생성
-npx wrangler d1 create webapp-production
+자세한 배포 가이드는 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**를 참고하세요.
 
-# 2. wrangler.jsonc에 database_id 업데이트
-
-# 3. 프로덕션 마이그레이션 실행
-npm run db:migrate:prod
-
-# 4. Cloudflare Pages 프로젝트 생성
-npx wrangler pages project create webapp --production-branch main
-
-# 5. 배포
-npm run deploy
-```
+### 간단 요약
+1. **Cloudflare Dashboard**에서 D1 Database 생성 (`dongne-gift-production`)
+2. **Console 탭**에서 마이그레이션 SQL 실행
+3. **Workers & Pages**에서 GitHub 연결 (`gatchigayo2024/dongne-gift`)
+4. **Build 설정**: `npm run build` / `dist`
+5. **D1 Binding**: Variable name `DB` → `dongne-gift-production`
+6. **재배포** 후 테스트
 
 ## URLs
 - **로컬 개발**: https://3000-i3bz0om2d3s12ccy7w6q6-02b9cc79.sandbox.novita.ai
-- **프로덕션**: (배포 후 업데이트 예정)
-- **GitHub**: (업로드 후 업데이트 예정)
+- **프로덕션**: https://dongne-gift.pages.dev (배포 진행 중)
+- **GitHub**: https://github.com/gatchigayo2024/dongne-gift
+- **배포 가이드**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ## 기술 스택
 
@@ -253,7 +252,13 @@ webapp/
 - 오프라인 캐싱 지원
 
 ## 마지막 업데이트
-2025-12-18
+2025-12-19
+
+### 최근 변경사항
+- ✅ 전화번호 인증 시스템 구현 (NHN Cloud SMS)
+- ✅ 공동구매 시스템을 2명 → 3명으로 변경
+- ✅ D1 Database ID: `613c2e9e-c97f-4272-9d72-3a38c145cb61`
+- ✅ 프로덕션 배포 가이드 추가
 
 ## 라이선스
 이 프로젝트는 교육 및 데모 목적으로 제작되었습니다.
