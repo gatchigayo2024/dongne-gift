@@ -243,8 +243,8 @@ app.post('/api/group-buys', async (c) => {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     
     const result = await c.env.DB.prepare(`
-      INSERT INTO group_buys (gift_id, creator_user_id, discount_rate, expires_at)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO group_buys (gift_id, creator_user_id, discount_rate, participant_count, expires_at)
+      VALUES (?, ?, ?, 1, ?)
     `).bind(giftId, userId, discountRate, expiresAt).run()
     
     return c.json({ success: true, data: { id: result.meta.last_row_id } })
@@ -253,19 +253,45 @@ app.post('/api/group-buys', async (c) => {
   }
 })
 
-// Join group buy
+// Join group buy (3명 시스템)
 app.post('/api/group-buys/:id/join', async (c) => {
   try {
     const id = c.req.param('id')
     const { userId } = await c.req.json()
     
-    // 🔥 같은 사용자가 자신의 공동구매에 참여 가능 (2인분 구매)
-    // Update group buy to complete
-    await c.env.DB.prepare(`
-      UPDATE group_buys 
-      SET partner_user_id = ?, is_complete = 1
+    // 현재 참여자 수 확인
+    const groupBuy = await c.env.DB.prepare(`
+      SELECT participant_count, partner_user_id, partner2_user_id 
+      FROM group_buys 
       WHERE id = ? AND is_complete = 0
-    `).bind(userId, id).run()
+    `).bind(id).first()
+    
+    if (!groupBuy) {
+      return c.json({ success: false, error: '이미 완료되었거나 존재하지 않는 공동구매입니다' }, 400)
+    }
+    
+    const currentCount = groupBuy.participant_count as number
+    
+    if (currentCount >= 3) {
+      return c.json({ success: false, error: '이미 정원이 찼습니다' }, 400)
+    }
+    
+    // 참여자 추가
+    if (currentCount === 1) {
+      // 2번째 참여자
+      await c.env.DB.prepare(`
+        UPDATE group_buys 
+        SET partner_user_id = ?, participant_count = 2
+        WHERE id = ?
+      `).bind(userId, id).run()
+    } else if (currentCount === 2) {
+      // 3번째 참여자 - 공동구매 완료!
+      await c.env.DB.prepare(`
+        UPDATE group_buys 
+        SET partner2_user_id = ?, participant_count = 3, is_complete = 1
+        WHERE id = ?
+      `).bind(userId, id).run()
+    }
     
     return c.json({ success: true })
   } catch (error: any) {

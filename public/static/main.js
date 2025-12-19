@@ -806,8 +806,8 @@ function processJoinGroupBuy(id) {
         color: "#6C8FD9" 
     });
     
-    // 2명이 모집되면 완료 처리
-    if (groupBuy.users.length >= 2) {
+    // 3명이 모집되면 완료 처리
+    if (groupBuy.users.length >= 3) {
         groupBuy.isComplete = true;
         groupBuy.endTime = null;
     }
@@ -2042,7 +2042,7 @@ function confirmGroupBuy() {
                 
                 // 공동구매 성사 팝업 표시 (약간의 딜레이 후)
                 setTimeout(() => {
-                    alert('🎉 공동구매 성사!\n\n2명이 모두 모집되었습니다.\n구매 내역에서 확인하실 수 있습니다.');
+                    alert('🎉 공동구매 성사!\n\n3명이 모두 모집되었습니다.\n구매 내역에서 확인하실 수 있습니다.');
                 }, 300);
             } else {
                 console.error('❌ 공동구매 참여 실패:', data.error);
@@ -2212,7 +2212,7 @@ function createTogetherPost() {
     document.getElementById('togetherStore').value = '';
     document.getElementById('togetherDate').value = '';
     document.getElementById('togetherTime').value = '';
-    document.getElementById('togetherPeople').value = '2명';
+    document.getElementById('togetherPeople').value = '3명';
     document.getElementById('togetherQuestion').value = '';
     document.getElementById('authorGender').value = '';
     document.getElementById('authorAge').value = '';
