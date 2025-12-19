@@ -335,12 +335,18 @@ async function showDetail(giftId) {
                 isComplete: gb.is_complete === 1,
                 endTime: gb.expires_at ? new Date(gb.expires_at) : null
             }));
-            // Add partner user if exists
+            // Add partner users if exist
             apiGift.groupBuys.forEach((gb, index) => {
                 if (gb.partner_nickname) {
                     gift.groupBuys[index].users.push({
                         initial: gb.partner_nickname[0],
                         color: "#5B7FE8"
+                    });
+                }
+                if (gb.partner2_nickname) {
+                    gift.groupBuys[index].users.push({
+                        initial: gb.partner2_nickname[0],
+                        color: "#6C8FD9"
                     });
                 }
             });
@@ -706,9 +712,12 @@ function createGroupBuyCard(groupBuy) {
         avatarsHTML += `<div class="user-avatar" style="background-color: ${user.color}">${user.initial}</div>`;
     });
     
-    // 미완료 시 빈 아바타 추가
+    // 미완료 시 빈 아바타 추가 (3명까지)
     if (!groupBuy.isComplete) {
-        avatarsHTML += '<div class="user-avatar empty">+</div>';
+        const emptySlots = 3 - groupBuy.users.length;
+        for (let i = 0; i < emptySlots; i++) {
+            avatarsHTML += '<div class="user-avatar empty">+</div>';
+        }
     }
     avatarsHTML += '</div>';
     
@@ -2006,12 +2015,18 @@ function confirmGroupBuy() {
                         isComplete: gb.is_complete === 1,
                         endTime: gb.expires_at ? new Date(gb.expires_at) : null
                     }));
-                    // Add partner user if exists
+                    // Add partner users if exist
                     apiGift.groupBuys.forEach((gb, index) => {
                         if (gb.partner_nickname) {
                             gift.groupBuys[index].users.push({
                                 initial: gb.partner_nickname[0],
                                 color: "#5B7FE8"
+                            });
+                        }
+                        if (gb.partner2_nickname) {
+                            gift.groupBuys[index].users.push({
+                                initial: gb.partner2_nickname[0],
+                                color: "#6C8FD9"
                             });
                         }
                     });

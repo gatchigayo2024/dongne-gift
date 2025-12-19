@@ -197,10 +197,14 @@ app.get('/api/gifts/:id', async (c) => {
     
     // Get group buys with user info
     const { results: groupBuys } = await c.env.DB.prepare(`
-      SELECT gb.*, u1.nickname as creator_nickname, u2.nickname as partner_nickname
+      SELECT gb.*, 
+             u1.nickname as creator_nickname, 
+             u2.nickname as partner_nickname,
+             u3.nickname as partner2_nickname
       FROM group_buys gb
       JOIN users u1 ON gb.creator_user_id = u1.id
       LEFT JOIN users u2 ON gb.partner_user_id = u2.id
+      LEFT JOIN users u3 ON gb.partner2_user_id = u3.id
       WHERE gb.gift_id = ?
       ORDER BY gb.created_at DESC
     `).bind(id).all()
